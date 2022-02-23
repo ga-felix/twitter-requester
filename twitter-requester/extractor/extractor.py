@@ -93,8 +93,8 @@ class QueryBuilder():
         
 class Lookup():
 
-    def __init__(self):
-        self.t_api = api.Api()
+    def __init__(self, keys):
+        self.t_api = api.Api(keys)
         self.data = DataProcessor()
     
     def get_first_tweet(self, query, end_time=None, npages=-1, max_results=500):

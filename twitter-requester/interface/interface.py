@@ -5,6 +5,8 @@ import csv
 from datetime import date
 import math
 import traceback
+from datetime import datetime
+import os
 
 class tweetsHandler():
 
@@ -35,6 +37,8 @@ class GUI():
         self.backgroundColor = '#14171A'
         self.font = 'Arial 12 bold'
         self.layout = [
+            [sg.Text('Insira seu bearer token', key='-BearerToken-', font=self.font, background_color=self.backgroundColor)],
+            [sg.Input(key='-bearer-', do_not_clear=True, font=self.font)],
             [sg.Text('Digite um termo de busca', key='-QueryWord-', font=self.font, background_color=self.backgroundColor)],
             [sg.Input(key='-key-', do_not_clear=False, font=self.font)],
             [self.createButton('Adicionar termo'), self.createButton('Remover termo'), self.createButton('Limpar termos')],
@@ -49,15 +53,22 @@ class GUI():
     def buildQuery(self, event, values):
         if event != 'Procurar tweets':
             return
+        since, until = None, None
+        if values["-since-"] is not None and values["-since-"] != "":
+            since = str(datetime.strptime(values["-since-"], '%Y-%m-%d %H:%M:%S').isoformat()) + 'Z'
+        if values["-to-"] is not None and values["-to-"] != "":
+            until = datetime.strptime(values["-to-"], '%Y-%m-%d %H:%M:%S').isoformat() + 'Z'
         queryBuilder = QueryBuilder()
         query = queryBuilder.build(self.keywords, retweets_only=values['-OnlyRetweets-'], replies_only=values['-OnlyReplies-'], quotes_only=values['-OnlyQuotes-'], del_retweets=values['-Retweets-'], del_replies=values['-Replies-'], del_quotes=values['-Quotes-'])
-        lookup = Lookup()
+        lookup = Lookup([values["-bearer-"]])
         if values["-notweets-"] != None and values["-notweets-"] != "":
             total = int(values["-notweets-"])
         else:
             total = 1000
         try:
-            tweetsHandler.export_tweets(lookup.get_archive_tweets(query, start_time=values["-since-"], end_time=values["-to-"], npages=math.ceil(total/500), max_results=500), 'datasets/' + 'df-' + str(date.today()))
+            if not os.path.exists('datasets'):
+                os.makedirs('datasets')
+            tweetsHandler.export_tweets(lookup.get_archive_tweets(query, start_time=since, end_time=until, npages=math.ceil(total/500), max_results=500), 'datasets/' + 'df-' + str(date.today()))
             sg.popup("Amostra de tweets gerada com sucesso.")
         except ApiError as e:
             error = str(e)

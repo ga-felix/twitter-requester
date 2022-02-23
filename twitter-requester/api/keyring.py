@@ -19,8 +19,8 @@ class Keyring():
                 cls._instance = super(Keyring, cls).__new__(cls)
             return cls._instance
 
-    def __init__(self):
-        self.keyring = self.read()
+    def __init__(self, keys):
+        self.keyring = keys
         self.in_use = list()
         self.timer = dict()
         self._lock = RLock()
@@ -35,17 +35,6 @@ class Keyring():
             base_path = os.path.abspath(".")
 
         return os.path.join(base_path, relative_path)
-
-    def read(self):
-        keyring = list()
-        with open(self.resource_path("api\\keys\\keys.json")) as keys_file:
-            read_keys = json.load(keys_file)
-            for item in read_keys:
-                keys = list()
-                user_keys = read_keys[item]
-                for key in user_keys:
-                    keyring.append(str(user_keys[key]))
-            return keyring
 
     def request(self):
         self._lock.acquire() # Enter critical section

@@ -95,15 +95,15 @@ class Api():
 
     # Setup default parameters that request should return.
 
-    def __init__(self):
+    def __init__(self, keys):
         self.tweets = "id,text,created_at,author_id,public_metrics,referenced_tweets"
         self.users = "id,username,description,public_metrics,verified,created_at"
         self.expansions = "author_id"
-        self.keys_user_timeline = keyring.Keyring()
-        self.keys_search_tweets = keyring.Keyring()
-        self.keys_full_search = keyring.Keyring()
-        self.keys_retweeters = keyring.Keyring()
-        self.keys_count = keyring.Keyring()
+        self.keys_user_timeline = keyring.Keyring(keys)
+        self.keys_search_tweets = keyring.Keyring(keys)
+        self.keys_full_search = keyring.Keyring(keys)
+        self.keys_retweeters = keyring.Keyring(keys)
+        self.keys_count = keyring.Keyring(keys)
 
     # Set the bearer token at the header of request. The bearer token 
     # allows more calls than the standart one.
