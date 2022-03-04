@@ -96,9 +96,9 @@ class Api():
     # Setup default parameters that request should return.
 
     def __init__(self, keys):
-        self.tweets = "id,text,created_at,author_id,public_metrics,referenced_tweets"
+        self.tweets = "id,text,created_at,author_id,public_metrics"
         self.users = "id,username,description,public_metrics,verified,created_at"
-        self.expansions = "author_id"
+        self.expansions = "author_id,referenced_tweets.id,referenced_tweets.id.author_id"
         self.keys_user_timeline = keyring.Keyring(keys)
         self.keys_search_tweets = keyring.Keyring(keys)
         self.keys_full_search = keyring.Keyring(keys)

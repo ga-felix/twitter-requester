@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 from extractor.extractor import Lookup, QueryBuilder
 from api.api import ApiError
+from reporter.clustering import LouvainClustering
 import csv
 from datetime import date
 import math
@@ -14,9 +15,9 @@ class tweetsHandler():
     def export_tweets(tweets, name):
         with open(name + '.csv', 'w+', encoding='utf-8', newline='') as file:
             writer = csv.writer(file, delimiter=';', quoting=csv.QUOTE_ALL)
-            writer.writerow(["id", "text", "created_at", "author_id", "author_name", "like_count", "retweet_count", "quote_count", "reply_count", "retweet_of_id", "quote_of_id", "reply_to_id"])
+            writer.writerow(["id", "text", "created_at", "author_id", "author_name", "like_count", "retweet_count", "quote_count", "reply_count", "reference_type", "referenced_tweet_id", "referenced_tweet_author_id"])
             for tweet in tweets:
-                writer.writerow([tweet.id, tweet.text.replace("\"", "'"), tweet.created_at, tweet.author_id, tweet.author.name, tweet.public_metrics.like_count, tweet.public_metrics.retweet_count, tweet.public_metrics.quote_count, tweet.public_metrics.reply_count, tweet.retweet_of, tweet.quote_of, tweet.reply_of])
+                writer.writerow([tweet.id, tweet.text.replace("\"", "'"), tweet.created_at, tweet.author_id, tweet.author.name, tweet.public_metrics.like_count, tweet.public_metrics.retweet_count, tweet.public_metrics.quote_count, tweet.public_metrics.reply_count, tweet.reference_type, tweet.referenced_tweet_id, tweet.referenced_tweet_author_id])
 
 class GUI():
 
@@ -43,10 +44,10 @@ class GUI():
             [sg.Input(key='-key-', do_not_clear=False, font=self.font)],
             [self.createButton('Adicionar termo'), self.createButton('Remover termo'), self.createButton('Limpar termos')],
             [sg.Listbox(self.keywords, key='-Listbox-', font=self.font, size=(50, 10), tooltip='Todos esses termos serão buscados.', background_color='#E1E8ED')],
-            [sg.Input(key='-since-', size=(9,1), font=self.font), sg.CalendarButton('Data início',  target='-since-', button_color=self.defaultColor, default_date_m_d_y=(2,None,2020), locale='pt_BR', begin_at_sunday_plus=1, font=self.font), sg.Input(key='-to-', size=(9,1), font=self.font), sg.CalendarButton('Data final',  target='-to-',  default_date_m_d_y=(2,None,2020), locale='pt_BR', begin_at_sunday_plus=1, font=self.font, button_color=self.defaultColor), sg.Text('Nº tweets', key='-NTweets-', font=self.font, background_color=self.backgroundColor), sg.Input(key='-notweets-', size=(5,1), do_not_clear=False, font=self.font)],
+            [sg.Input(key='-since-', size=(9,1), font=self.font), sg.CalendarButton('Data início',  target='-since-', button_color=self.defaultColor, default_date_m_d_y=(2,None,2020), locale='pt_BR', begin_at_sunday_plus=1, font=self.font), sg.Input(key='-to-', size=(9,1), font=self.font), sg.CalendarButton('Data final',  target='-to-',  default_date_m_d_y=(2,None,2020), locale='pt_BR', begin_at_sunday_plus=1, font=self.font, button_color=self.defaultColor), sg.Text('Nº tweets', key='-NTweets-', font=self.font, background_color=self.backgroundColor), sg.Input(key='-notweets-', size=(5,1), do_not_clear=True, font=self.font)],
             [self.createCheckbox('Remover retweets', '-Retweets-'), self.createCheckbox('Remover replies', '-Replies-'), self.createCheckbox('Remover quotes', '-Quotes-')],
             [self.createRadio('Apenas retweets', 'Radio1', '-OnlyRetweets-'), self.createRadio('Apenas replies', 'Radio1', '-OnlyReplies-'), self.createRadio('Apenas quotes', 'Radio1', '-OnlyQuotes-'), sg.Button('↺', font='Arial 14 bold', button_color=self.defaultColor, mouseover_colors=(self.fontColor, self.colorOnClick))],
-            [sg.Button('Procurar tweets', font=self.font, size=(46, 1), button_color=self.defaultColor, mouseover_colors=(self.fontColor, self.colorOnClick))]
+            [sg.Button('Procurar tweets', font=self.font, size=(46, 1), button_color=self.defaultColor, mouseover_colors=(self.fontColor, self.colorOnClick)), self.createCheckbox('Clusterizar', '-Cluster-')]
         ]
         self.window = sg.Window('Twittery', self.layout, background_color=self.backgroundColor, element_justification='c')
 
@@ -68,8 +69,11 @@ class GUI():
         try:
             if not os.path.exists('datasets'):
                 os.makedirs('datasets')
-            tweetsHandler.export_tweets(lookup.get_archive_tweets(query, start_time=since, end_time=until, npages=math.ceil(total/500), max_results=500), 'datasets/' + 'df-' + str(date.today()))
+            df = lookup.get_archive_tweets(query, start_time=since, end_time=until, npages=math.ceil(total/500), max_results=500)
+            tweetsHandler.export_tweets(df, 'datasets/' + 'df-' + str(date.today()))
             sg.popup("Amostra de tweets gerada com sucesso.")
+            if values["-Cluster-"]:
+                LouvainClustering.do(df)
         except ApiError as e:
             error = str(e)
             if '400' in error:

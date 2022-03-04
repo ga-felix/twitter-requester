@@ -17,18 +17,19 @@ class DataProcessor():
         authors = list(page.includes.users)
         if self.has_data(page):
             for index, tweet in enumerate(page.data):
-                tweet.author = next((author for author in authors if author.id == tweet.author_id), None)
-    
-                tweet.reply_of, tweet.quote_of, tweet.retweet_of = 0, 0, 0
+                tweet.author = next((a for a in authors if a.id == tweet.author_id), None)
+                tweet.referenced_tweet_id, tweet.referenced_tweet_author_id = 0, 0
+                tweet.reference_type = ''
+
                 if hasattr(tweet, "referenced_tweets"):
-                    for ref_tweet in tweet.referenced_tweets:
-                        if ref_tweet.type == "replied_to":
-                            tweet.reply_of = ref_tweet.id
-                        if ref_tweet.type == "quoted":
-                            tweet.quote_of = ref_tweet.id
-                        if ref_tweet.type == "retweeted":
-                            tweet.retweet_of = ref_tweet.id
-                self.tweets.append(tweet)
+                    for ref in tweet.referenced_tweets:
+                        ref_tweet = next((t for t in page.includes.tweets if t.id == ref.id), None)
+                        tweet.referenced_tweet_id = ref_tweet.id
+                        tweet.referenced_tweet_author_id = ref_tweet.author_id
+                        tweet.reference_type = ref.type
+                        self.tweets.append(tweet)
+                else:
+                    self.tweets.append(tweet)
         
         if self.has_meta(page):
             self.tweets[0].meta = page.meta
