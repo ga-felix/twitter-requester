@@ -2,6 +2,7 @@
 import abc
 import networkx as nx
 import itertools
+import matplotlib.pyplot as plt
 
 class Clustering(abc.ABC):
 
@@ -27,12 +28,13 @@ class LouvainClustering(Clustering):
         for a_key in intersect.keys():
             for b_key in intersect.keys():
                 if a_key != b_key:
-                    weight = set.intersection(set(intersect[a_key]), set(intersect[b_key]))
-                    graph.add_edges_from(a_key, b_key, weight=weight)
+                    weight = len(set.intersection(set(intersect[a_key]), set(intersect[b_key])))
+                    graph.add_edge(a_key, b_key, weight=weight)
         return graph
 
     @classmethod
     def do(cls, df, from_field='author_id', to_field='referenced_tweet_author_id'):
         graph = cls.create_graph(df, from_field, to_field)
         nx.draw(graph)
+        plt.show()
         return df

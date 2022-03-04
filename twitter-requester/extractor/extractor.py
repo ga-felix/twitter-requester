@@ -27,9 +27,7 @@ class DataProcessor():
                         tweet.referenced_tweet_id = ref_tweet.id
                         tweet.referenced_tweet_author_id = ref_tweet.author_id
                         tweet.reference_type = ref.type
-                        self.tweets.append(tweet)
-                else:
-                    self.tweets.append(tweet)
+                self.tweets.append(tweet)
         
         if self.has_meta(page):
             self.tweets[0].meta = page.meta
