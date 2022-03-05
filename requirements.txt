@@ -1,5 +1,2 @@
-pymysql
-networkx
-datetime
-PySimpleGui
-pandas
+PySimpleGui==4.57.0
+networkx==2.6.3
