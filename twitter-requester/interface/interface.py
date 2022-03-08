@@ -69,11 +69,14 @@ class GUI():
         try:
             if not os.path.exists('datasets'):
                 os.makedirs('datasets')
+            if values["-Cluster-"] and not values['-OnlyRetweets-']:
+                sg.popup_error(f'A opção Somente Retweets está desabilitada. A clusterização só funciona se essa opção estiver habilitada. Note também que os termos de busca devem estar na forma: \"RT @conta:\".')
+                return
             df = lookup.get_archive_tweets(query, start_time=since, end_time=until, npages=math.ceil(total/500), max_results=500)
             tweetsHandler.export_tweets(df, 'datasets/' + 'df-' + str(date.today()))
             sg.popup("Amostra de tweets gerada com sucesso.")
             if values["-Cluster-"]:
-                LouvainClustering.do(df)
+                LouvainClustering.do(df, self.keywords)
         except ApiError as e:
             error = str(e)
             if '400' in error:
